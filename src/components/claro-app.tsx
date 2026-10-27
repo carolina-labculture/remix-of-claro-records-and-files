@@ -32,7 +32,7 @@ const date = (value: string) => new Date(value.length === 10 ? `${value}T12:00:0
 const statusLabels: Record<string, string> = { open: 'Em aberto', paid: 'Paga', draft: 'Rascunho', cancelled: 'Cancelada' };
 const meta = (doc: Tables<'documents'>, key: string) => typeof doc.metadata === 'object' && doc.metadata && !Array.isArray(doc.metadata) ? String(doc.metadata[key] ?? '') : '';
 function must<T>(result: { data: T; error: { message: string } | null }): T { if (result.error) throw new Error(result.error.message); return result.data; }
-function mustRow<T>(result: { data: T | null; error: { message: string } | null }): T { if (result.error) throw new Error(result.error.message); if (result.data == null) throw new Error('Registro não encontrado.'); return result.data; }
+function mustRow<T>(result: { data: T; error: { message: string } | null }): NonNullable<T> { if (result.error) throw new Error(result.error.message); if (result.data == null) throw new Error('Registro não encontrado.'); return result.data as NonNullable<T>; }
 export function ClaroError() {
   const router = useRouter();
   return <div className="p-12 text-center"><h1 className="text-xl font-semibold">Não foi possível abrir o Claro</h1><Button className="mt-5" onClick={() => router.invalidate()}>Tentar novamente</Button></div>;
@@ -175,7 +175,7 @@ export function ClaroApp({ view, q = '', sort = 'recent', filter = 'all', folder
           if (id) must(await supabase.from(current.kind === 'clients' ? 'clients' : 'suppliers').update(values).eq('id', id));
           else id = mustRow(await supabase.from(current.kind === 'clients' ? 'clients' : 'suppliers').insert(values).select('id').single()).id;
         }
-        must(await supabase.from('folders').update({ entity_id: id }).eq('id', recordFolder));
+        must(await supabase.from('folders').update({ entity_id: id ?? null }).eq('id', recordFolder));
         await audit(current.item ? 'editou' : 'criou', current.kind, id ?? null, name);
       } else if (current?.type === 'document' && document) {
         must(await supabase.from('documents').update({ name: val('name'), metadata: { ...(typeof document.metadata === 'object' && document.metadata && !Array.isArray(document.metadata) ? document.metadata : {}), tags: val('tags') }, updated_at: new Date().toISOString() }).eq('id', document.id));
