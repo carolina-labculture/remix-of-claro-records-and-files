@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { ClaroApp, ClaroError } from '@/components/claro-app';
 import { claroQuery } from '@/lib/claro.functions';
 export const Route = createFileRoute('/')({
-  validateSearch: (s: Record<string, unknown>): { q?: string; sort?: string; filter?: string; folder?: string } => ({ q: typeof s.q === 'string' ? s.q : '', sort: typeof s.sort === 'string' ? s.sort : 'recent', filter: typeof s.filter === 'string' ? s.filter : 'all', folder: typeof s.folder === 'string' ? s.folder : '' }),
+  validateSearch: (s: Record<string, unknown>): { q?: string; sort?: string; filter?: string; folder?: string } => ({ q: typeof s['q'] === 'string' ? s['q'] : '', sort: typeof s['sort'] === 'string' ? s['sort'] : 'recent', filter: typeof s['filter'] === 'string' ? s['filter'] : 'all', folder: typeof s['folder'] === 'string' ? s['folder'] : '' }),
   loader: ({ context }) => context.queryClient.ensureQueryData(claroQuery),
   head: () => ({ meta: [{ title: 'Início · Claro' }, { name: 'description', content: 'Início: documentos e registros organizados no Claro.' }, { property: 'og:title', content: 'Início · Claro' }, { property: 'og:description', content: 'Início: documentos e registros organizados no Claro.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary_large_image' }] }),
   component: Page,

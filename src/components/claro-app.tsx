@@ -37,7 +37,7 @@ export function ClaroError() {
   const router = useRouter();
   return <div className="p-12 text-center"><h1 className="text-xl font-semibold">Não foi possível abrir o Claro</h1><Button className="mt-5" onClick={() => router.invalidate()}>Tentar novamente</Button></div>;
 }
-export function ClaroApp({ view, q = '', sort = 'recent', filter = 'all', folderId = '' }: { view: View; q?: string; sort?: string; filter?: string; folderId?: string }) {
+export function ClaroApp({ view, q = '', sort = 'recent', filter = 'all', folderId = '' }: { view: View; q?: string | undefined; sort?: string | undefined; filter?: string | undefined; folderId?: string | undefined }) {
   const { data } = useSuspenseQuery(claroQuery);
   const qc = useQueryClient();
   const navigate = useNavigate();
