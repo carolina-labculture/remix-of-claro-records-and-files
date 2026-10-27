@@ -32,6 +32,7 @@ const date = (value: string) => new Date(value.length === 10 ? `${value}T12:00:0
 const statusLabels: Record<string, string> = { open: 'Em aberto', paid: 'Paga', draft: 'Rascunho', cancelled: 'Cancelada' };
 const meta = (doc: Tables<'documents'>, key: string) => typeof doc.metadata === 'object' && doc.metadata && !Array.isArray(doc.metadata) ? String(doc.metadata[key] ?? '') : '';
 function must<T>(result: { data: T; error: { message: string } | null }): T { if (result.error) throw new Error(result.error.message); return result.data; }
+function mustRow<T>(result: { data: T | null; error: { message: string } | null }): T { if (result.error) throw new Error(result.error.message); if (result.data == null) throw new Error('Registro não encontrado.'); return result.data; }
 export function ClaroError() {
   const router = useRouter();
   return <div className="p-12 text-center"><h1 className="text-xl font-semibold">Não foi possível abrir o Claro</h1><Button className="mt-5" onClick={() => router.invalidate()}>Tentar novamente</Button></div>;
@@ -146,11 +147,11 @@ export function ClaroApp({ view, q = '', sort = 'recent', filter = 'all', folder
         if (!name) throw new Error('Informe o nome da pasta.');
         let id = current.item?.id;
         if (id) must(await supabase.from('folders').update({ name }).eq('id', id));
-        else id = must(await supabase.from('folders').insert({ name, workspace_id: wid, parent_id: folderId || null, created_by: pid }).select('id').single()).id;
+        else id = mustRow(await supabase.from('folders').insert({ name, workspace_id: wid, parent_id: folderId || null, created_by: pid }).select('id').single()).id;
         await audit(current.item ? 'renomeou' : 'criou', 'folder', id ?? null, name);
       } else if (current?.type === 'workspace') {
         const name = val('name'); if (!name) throw new Error('Informe o nome da área.');
-        const created = must(await supabase.from('workspaces').insert({ name }).select('id').single());
+        const created = mustRow(await supabase.from('workspaces').insert({ name }).select('id').single());
         must(await supabase.from('workspace_members').insert(data.people.filter(p => fields.getAll('members').includes(p.id) || p.id === pid).map(p => ({ workspace_id: created.id, person_id: p.id, role: 'editor' }))));
         setWorkspace(created.id); localStorage.setItem('claro-workspace', created.id); await audit('criou', 'workspace', created.id, name, created.id);
       } else if (current?.type === 'move') {
@@ -165,14 +166,14 @@ export function ClaroApp({ view, q = '', sort = 'recent', filter = 'all', folder
         const name = val(isInvoice ? 'number' : 'name'); if (!name) throw new Error('Preencha o nome ou número.');
         let id = current.item?.id;
         let recordFolder = current.item?.folder_id;
-        if (!recordFolder) recordFolder = must(await supabase.from('folders').insert({ workspace_id: wid, name, created_by: pid, entity_type: current.kind }).select('id').single()).id;
+        if (!recordFolder) recordFolder = mustRow(await supabase.from('folders').insert({ workspace_id: wid, name, created_by: pid, entity_type: current.kind }).select('id').single()).id;
         if (isInvoice) {
           const values = { workspace_id: wid, kind: current.kind === 'sales' ? 'sale' : 'purchase', number: name, amount: Number(val('amount')), issue_date: val('issue_date'), due_date: val('due_date') || null, status: val('status'), notes: val('notes'), client_id: current.kind === 'sales' ? val('party') || null : null, supplier_id: current.kind === 'purchases' ? val('party') || null : null, folder_id: recordFolder, updated_at: new Date().toISOString() };
-          if (id) must(await supabase.from('invoices').update(values).eq('id', id)); else id = must(await supabase.from('invoices').insert(values).select('id').single()).id;
+          if (id) must(await supabase.from('invoices').update(values).eq('id', id)); else id = mustRow(await supabase.from('invoices').insert(values).select('id').single()).id;
         } else {
           const values = { workspace_id: wid, name, tax_id: val('tax_id'), email: val('email'), phone: val('phone'), city: val('city'), notes: val('notes'), folder_id: recordFolder, updated_at: new Date().toISOString() };
           if (id) must(await supabase.from(current.kind === 'clients' ? 'clients' : 'suppliers').update(values).eq('id', id));
-          else id = must(await supabase.from(current.kind === 'clients' ? 'clients' : 'suppliers').insert(values).select('id').single()).id;
+          else id = mustRow(await supabase.from(current.kind === 'clients' ? 'clients' : 'suppliers').insert(values).select('id').single()).id;
         }
         must(await supabase.from('folders').update({ entity_id: id }).eq('id', recordFolder));
         await audit(current.item ? 'editou' : 'criou', current.kind, id ?? null, name);
@@ -253,7 +254,7 @@ export function ClaroApp({ view, q = '', sort = 'recent', filter = 'all', folder
     </DialogContent></Dialog>
   </div>;
 }
-function Field({ label, name, value = '', type = 'text', required = false }: { label: string; name: string; value?: string | number | null; type?: string; required?: boolean }) { return <label className="field-label">{label}<input className="form-input" name={name} defaultValue={value ?? ''} type={type} required={required} min={type === 'number' ? 0 : undefined} step={type === 'number' ? '0.01' : undefined} /></label>; }
+function Field({ label, name, value = '', type = 'text', required = false }: { label: string; name: string; value?: string | number | null | undefined; type?: string; required?: boolean }) { return <label className="field-label">{label}<input className="form-input" name={name} defaultValue={value ?? ''} type={type} required={required} min={type === 'number' ? 0 : undefined} step={type === 'number' ? '0.01' : undefined} /></label>; }
 function Empty({ icon: Icon, title }: { icon: typeof File; title: string }) { return <div className="empty-state"><Icon /><p>{title}</p></div>; }
 function RecordForm({ modal, clients, suppliers, busy, onSubmit, onFolder }: { modal: Extract<Modal, { type: 'record' }>; clients: ClaroData['clients']; suppliers: ClaroData['suppliers']; busy: boolean; onSubmit: (e: FormEvent<HTMLFormElement>) => void; onFolder: () => void }) {
   const item = modal.item;
