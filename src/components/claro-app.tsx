@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useRouter } from '@tanstack/react-router';
 import { useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
-import { ArrowDownToLine, ArrowRight, Archive, Building2, Camera, Check, ChevronDown, ChevronRight, CircleHelp, File, FileText, Folder, FolderOpen, History, Home, Inbox, LayoutGrid, List, Loader2, Menu, MoreHorizontal, Plus, Search, Star, Trash2, Upload, Users, X } from 'lucide-react';
+import { ArrowDownToLine, ArrowRight, Archive, Building2, Camera, Check, ChevronDown, ChevronRight, CircleHelp, File, FileText, Folder, FolderOpen, History, Home, Inbox, LayoutGrid, List, Loader2, Menu, Monitor, MoreHorizontal, Plus, Search, Smartphone, Star, Trash2, Upload, Users, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -37,7 +37,12 @@ export function ClaroError() {
   const router = useRouter();
   return <div className="p-12 text-center"><h1 className="text-xl font-semibold">Não foi possível abrir o Claro</h1><Button className="mt-5" onClick={() => router.invalidate()}>Tentar novamente</Button></div>;
 }
-export function ClaroApp({ view, q = '', sort = 'recent', filter = 'all', folderId = '' }: { view: View; q?: string | undefined; sort?: string | undefined; filter?: string | undefined; folderId?: string | undefined }) {
+export function ClaroApp({ view, q = '', sort = 'recent', filter = 'all', folderId = '', preferredLayout }: { view: View; q?: string | undefined; sort?: string | undefined; filter?: string | undefined; folderId?: string | undefined; preferredLayout?: 'app' }) {
+  const [appLayout, setAppLayout] = useState(preferredLayout === 'app');
+  useEffect(() => {
+    if (preferredLayout === 'app') localStorage.setItem('claro-layout', 'app');
+    setAppLayout(preferredLayout === 'app' || localStorage.getItem('claro-layout') === 'app');
+  }, [preferredLayout]);
   const { data } = useSuspenseQuery(claroQuery);
   const qc = useQueryClient();
   const navigate = useNavigate();
@@ -203,7 +208,7 @@ export function ClaroApp({ view, q = '', sort = 'recent', filter = 'all', folder
     <Button variant="ghost" className="folder-name" onClick={() => goFolder(f.id)}>{f.name}</Button><div className="folder-meta"><span>{docs.filter(d => d.folder_id === f.id).length} documentos</span><Button variant="ghost" size="icon" title="Favoritar pasta" onClick={() => favorite('folder', f.id, f.name)}><Star className={favorites.some(x => x.item_id === f.id) ? 'fill-current text-primary' : ''} /></Button></div>
     {rowMenu === f.id && <div className="row-menu"><Button variant="ghost" onClick={() => { setModal({ type: 'folder', item: f }); setRowMenu(''); }}>Renomear</Button><Button variant="ghost" onClick={() => { setModal({ type: 'move', item: f, kind: 'folder' }); setRowMenu(''); }}>Mover</Button><Button variant="ghost" onClick={() => { archiveFolder(f); setRowMenu(''); }}>{f.archived_at ? 'Restaurar' : 'Arquivar'}</Button><Button variant="ghost" className="text-destructive" onClick={() => { deleteFolder(f); setRowMenu(''); }}>Excluir</Button></div>}
   </div>)}</div>; }
-  return <div className="app-shell">
+  return <div className={`app-shell ${appLayout ? 'app-edition' : ''}`}>
     <aside className={`app-sidebar ${mobileMenu ? 'is-open' : ''}`}>
       <Link to="/" className="brand"><span className="brand-mark"><FolderOpen /></span>claro<span className="brand-dot">.</span></Link>
       <div className="workspace-picker"><span className="workspace-icon">{workspace?.name.charAt(0) ?? 'C'}</span><label className="min-w-0 flex-1"><span className="block text-[10px] uppercase text-muted-foreground">Área de trabalho</span><select aria-label="Área de trabalho" value={wid} onChange={e => chooseArea(e.target.value)}>{areas.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}{!areas.length && <option value="">Criar uma área</option>}</select></label><ChevronDown className="size-3 text-muted-foreground" /></div>
@@ -213,7 +218,7 @@ export function ClaroApp({ view, q = '', sort = 'recent', filter = 'all', folder
     </aside>
     {mobileMenu && <div className="menu-backdrop" onClick={() => setMobileMenu(false)} />}
     <div className="app-main">
-      <header className="app-header"><div className="flex items-center gap-3"><Button variant="ghost" size="icon" className="mobile-menu-trigger" onClick={() => setMobileMenu(true)} aria-label="Abrir menu"><Menu /></Button><span className="header-location">{workspace?.name ?? 'Claro'}<ChevronRight /> <strong>{titles[view]}</strong></span></div>
+      <header className="app-header"><div className="flex items-center gap-3"><Button variant="ghost" size="icon" className="mobile-menu-trigger" onClick={() => setMobileMenu(true)} aria-label="Abrir menu"><Menu /></Button><span className="header-location">{appLayout ? 'claro.' : workspace?.name ?? 'Claro'}<ChevronRight /> <strong>{titles[view]}</strong></span><Button variant="ghost" size="icon" title={appLayout ? 'Versão original' : 'Versão app'} aria-label={appLayout ? 'Versão original' : 'Versão app'} onClick={() => { const next = !appLayout; localStorage.setItem('claro-layout', next ? 'app' : 'original'); setAppLayout(next); navigate({ to: next ? '/app' : '/' }); }}>{appLayout ? <Monitor /> : <Smartphone />}</Button></div>
         <div className="header-actions"><Button variant="ghost" size="icon" title="Buscar" asChild><Link to="/busca"><Search /></Link></Button><span className="header-divider" /><div className="user-picker"><Button variant="ghost" className="user-button" onClick={() => setUserMenu(!userMenu)}><span className="avatar">{person?.name.charAt(0) ?? 'A'}</span><span className="user-name">{person?.name.split(' ')[0]}</span><ChevronDown className="size-3" /></Button>{userMenu && <div className="user-menu">{data.people.map(p => <Button variant="ghost" key={p.id} className="w-full justify-start" onClick={() => choosePerson(p.id)}><span className="mini-avatar">{p.name.charAt(0)}</span><span>{p.name}<small className="block text-left text-muted-foreground">{p.role_title}</small></span>{pid === p.id && <Check className="ml-auto" />}</Button>)}</div>}</div></div>
       </header>
       <main className="page-content">

@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AjustesRouteImport } from './routes/ajustes'
+import { Route as AppRouteImport } from './routes/app'
 import { Route as ArquivoRouteImport } from './routes/arquivo'
 import { Route as BuscaRouteImport } from './routes/busca'
 import { Route as ClientesRouteImport } from './routes/clientes'
@@ -28,6 +29,11 @@ const IndexRoute = IndexRouteImport.update({
 const AjustesRoute = AjustesRouteImport.update({
   id: '/ajustes',
   path: '/ajustes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppRoute = AppRouteImport.update({
+  id: '/app',
+  path: '/app',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ArquivoRoute = ArquivoRouteImport.update({
@@ -74,6 +80,7 @@ const VendasRoute = VendasRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/ajustes': typeof AjustesRoute
+  '/app': typeof AppRoute
   '/arquivo': typeof ArquivoRoute
   '/busca': typeof BuscaRoute
   '/clientes': typeof ClientesRoute
@@ -86,6 +93,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/ajustes': typeof AjustesRoute
+  '/app': typeof AppRoute
   '/arquivo': typeof ArquivoRoute
   '/busca': typeof BuscaRoute
   '/clientes': typeof ClientesRoute
@@ -99,6 +107,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/ajustes': typeof AjustesRoute
+  '/app': typeof AppRoute
   '/arquivo': typeof ArquivoRoute
   '/busca': typeof BuscaRoute
   '/clientes': typeof ClientesRoute
@@ -113,6 +122,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/ajustes'
+    | '/app'
     | '/arquivo'
     | '/busca'
     | '/clientes'
@@ -125,6 +135,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/ajustes'
+    | '/app'
     | '/arquivo'
     | '/busca'
     | '/clientes'
@@ -137,6 +148,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/ajustes'
+    | '/app'
     | '/arquivo'
     | '/busca'
     | '/clientes'
@@ -150,6 +162,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AjustesRoute: typeof AjustesRoute
+  AppRoute: typeof AppRoute
   ArquivoRoute: typeof ArquivoRoute
   BuscaRoute: typeof BuscaRoute
   ClientesRoute: typeof ClientesRoute
@@ -174,6 +187,13 @@ declare module '@tanstack/react-router' {
       path: '/ajustes'
       fullPath: '/ajustes'
       preLoaderRoute: typeof AjustesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app': {
+      id: '/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/arquivo': {
@@ -238,6 +258,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AjustesRoute: AjustesRoute,
+  AppRoute: AppRoute,
   ArquivoRoute: ArquivoRoute,
   BuscaRoute: BuscaRoute,
   ClientesRoute: ClientesRoute,

@@ -14,3 +14,4 @@
 - The selected simulated person and workspace persist locally; they are presentation filters, never authentication or security boundaries.
 - Store real file bytes in the files bucket and immutable document_versions rows; documents points to the current version for history and download.
 - Keep folder-cycle, inbox and upload validation in claro-rules with focused tests to prevent regressions.
+- The app edition reuses ClaroApp and the same data, with a locally persisted presentation choice and a dedicated /app entry; this preserves the original edition without duplicating business logic.
